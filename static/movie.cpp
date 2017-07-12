@@ -1,6 +1,8 @@
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
-
+using namespace std;
 IplImage * SrcImage = NULL;
 IplImage * pSrcImage = NULL;
 IplImage * img2 = NULL;
@@ -36,7 +38,7 @@ void onTrackerSlid()
 {
 	
 	char image_name[20];
-	std::string path = "C:\\Users\\Mz\\Desktop\\测试静止帧的图片带blur(视频5)7帧\\";
+	std::string path = "C:\\Users\\Mz\\Desktop\\测试\\";
 	int i, j;
 	CvScalar s0, s1, s2;
 	for (i = 0; i<SrcImage->height; i++)
@@ -71,22 +73,36 @@ void quick_sort(int l, int r)
 	if (l < r)
 	{
 		//Swap(s[l], s[(l + r) / 2]); //将中间的这个数和第一个数交换 参见注1  
-		int i = l, j = r, x = Record1[l];
+		int i = l;
+		int j = r;
+		int x = Record1[l];
+		int flag = Info[l];
 		while (i < j)
 		{
-			while (i < j && Record1[j] > x) // 从右向左找第一个小于x的数  
+			while (i < j && Record1[j] >= x) // 从右向左找第一个小于x的数
+			{
 				j--;
+			}
 			if (i < j)
-				Record1[i++] = Record1[j];
-			    Info[i++] = Info[j];
+			{ 
+				Record1[i] = Record1[j];
+			    Info[i] = Info[j];
+				i++;
+			}
 
 			while (i < j && Record1[i] < x) // 从左向右找第一个大于等于x的数  
+			{
 				i++;
+			}
 			if (i < j)
-			    Info[j--] = Info[i];
-			    Record1[j--] = Record1[i];
+			{
+				Info[j] = Info[i];
+				Record1[j] = Record1[i];
+				j--;
+			}
 		}
 		Record1[i] = x;
+		Info[i] = flag;
 		quick_sort(l, i - 1); // 递归调用   
 		quick_sort(i + 1, r);
 	}
@@ -99,8 +115,8 @@ void main()
 	int m=0;
 	const char *pstrWindowsSrcTitle = "原图";
 	const char *pstrWindowsToolBarName = "二值图阈值";
-	std::string path = "C:\\Users\\Mz\\Desktop\\测试静止帧的图片带blur(视频5)7帧\\";
-	VideoCapture cap("C:\\Users\\Mz\\Desktop\\Video\\5.avi");// open the default camera  
+	std::string path = "C:\\Users\\Mz\\Desktop\\测试\\";
+	VideoCapture cap("C:\\Users\\Mz\\Desktop\\Video\\3.avi");// open the default camera  
 	if (!cap.isOpened()) // check if we succeeded  
 		return;
 	Mat pre;
@@ -110,7 +126,7 @@ void main()
 		{
 			m++;
 			cap >> aft; // get a new frame from camera  
-			if ((m%7)== 0)
+			if ((m%5)== 0)
 			{
 				n++;
 				cap >> aft; // get a new frame from camera  
@@ -121,12 +137,12 @@ void main()
 				
 //预处理				
 				//均值滤波
-				blur(pre, pre, Size(3, 3));
-				blur(aft, aft, Size(3, 3));
+				//blur(pre, pre, Size(3, 3));
+				//blur(aft, aft, Size(3, 3));
 				//
 				IplImage *ssSrcImage = &IplImage(pre);
 				IplImage *pppSrcImage = &IplImage(aft);
-				//cvPyrMeanShiftFiltering(ssSrcImage, ssSrcImage, 25, 10, 2);
+				cvPyrMeanShiftFiltering(ssSrcImage, ssSrcImage, 25, 10, 2);
 				IplImage *sSrcImage=cvCreateImage(cvGetSize(ssSrcImage),8, 1);
 				cvCvtColor(ssSrcImage, sSrcImage, CV_BGR2GRAY);
 				//cvNamedWindow("灰度图像1", 2);
@@ -144,7 +160,7 @@ void main()
 				cvSetImageROI(sSrcImage, rect);//选取感兴趣区域
 				cvCopy(sSrcImage, SrcImage);
 				//int thresh = 80;
-				//cvPyrMeanShiftFiltering(pppSrcImage, pppSrcImage, 25, 10, 2);
+				cvPyrMeanShiftFiltering(pppSrcImage, pppSrcImage, 25, 10, 2);
 				IplImage *ppSrcImage= cvCreateImage(cvGetSize(pppSrcImage), IPL_DEPTH_8U, 1);
 				cvCvtColor(pppSrcImage, ppSrcImage, CV_BGR2GRAY);
 				//cvNamedWindow("灰度图像2", 2);
@@ -183,10 +199,15 @@ void main()
 		{
 			Info[i] = i;
 		}
-		quick_sort(1, nn);
+		quick_sort(1,nn);
 		for (int i = 1; i <= nn; i++)
 		{
 			printf("(%d)%d和%d\n", Info[i],Record1[i], su);
 		}
+		//轮廓提取
+		vector<vector<Point>> contours;
+		Mat matimg;
+		matimg = cvarrToMat(img2);
+		findContours(matimg,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
 }
