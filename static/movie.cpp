@@ -193,6 +193,19 @@ void main()
                 //cvDestroyWindow("pSrcImage");
 				//重新赋值
 				pre = aft.clone();
+				//轮廓提取
+				vector<vector<Point>> contours;
+				Mat matimg;
+				matimg = cvarrToMat(sSrcImage);
+				//find
+				findContours(matimg, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+				//draw
+				Mat result(matimg.size(), CV_8U, Scalar(0));
+				drawContours(result, contours, -1, Scalar(255), 2);
+
+				namedWindow("contours");
+				imshow("contours", result);
+				waitKey();
 			}
 		}
 		for (int i = 1; i <= nn; i++)
@@ -204,10 +217,5 @@ void main()
 		{
 			printf("(%d)%d和%d\n", Info[i],Record1[i], su);
 		}
-		//轮廓提取
-		vector<vector<Point>> contours;
-		Mat matimg;
-		matimg = cvarrToMat(img2);
-		findContours(matimg,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
 }
