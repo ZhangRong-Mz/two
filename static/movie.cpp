@@ -137,12 +137,12 @@ void main()
 				
 //预处理				
 				//均值滤波
-				//blur(pre, pre, Size(3, 3));
-				//blur(aft, aft, Size(3, 3));
+				blur(pre, pre, Size(3, 3));
+				blur(aft, aft, Size(3, 3));
 				//
 				IplImage *ssSrcImage = &IplImage(pre);
 				IplImage *pppSrcImage = &IplImage(aft);
-				cvPyrMeanShiftFiltering(ssSrcImage, ssSrcImage, 25, 10, 2);
+				//cvPyrMeanShiftFiltering(ssSrcImage, ssSrcImage, 25, 10, 2);
 				IplImage *sSrcImage=cvCreateImage(cvGetSize(ssSrcImage),8, 1);
 				cvCvtColor(ssSrcImage, sSrcImage, CV_BGR2GRAY);
 				//cvNamedWindow("灰度图像1", 2);
@@ -160,7 +160,7 @@ void main()
 				cvSetImageROI(sSrcImage, rect);//选取感兴趣区域
 				cvCopy(sSrcImage, SrcImage);
 				//int thresh = 80;
-				cvPyrMeanShiftFiltering(pppSrcImage, pppSrcImage, 25, 10, 2);
+				//cvPyrMeanShiftFiltering(pppSrcImage, pppSrcImage, 25, 10, 2);
 				IplImage *ppSrcImage= cvCreateImage(cvGetSize(pppSrcImage), IPL_DEPTH_8U, 1);
 				cvCvtColor(pppSrcImage, ppSrcImage, CV_BGR2GRAY);
 				//cvNamedWindow("灰度图像2", 2);
@@ -199,11 +199,27 @@ void main()
 				matimg = cvarrToMat(sSrcImage);
 				//find
 				findContours(matimg, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+				CvSeq *first_contour = NULL;
+				CvMemStorage *storage = cvCreateMemStorage(0); //提取轮廓需要的储存容量为默认KB
+				CvSeq * pcontour = 0; //提取轮廓的序列指针
+				cvFindContours(sSrcImage, storage, &first_contour);
+				while (contour = cvFindNextContour(contours))
+				{
+					tmparea = fabs(cvContourArea(contour));
+					if (tmparea < minarea)
+					{
+						cvSubstituteContour(scanner, NULL);//删除当前的轮廓  
+					}
+				}
 				//draw
-				Mat result(matimg.size(), CV_8U, Scalar(0));
-				drawContours(result, contours, -1, Scalar(255), 2);
-
-				namedWindow("contours");
+				Mat result(matimg.size(), CV_8U, Scalar(255));
+				drawContours(result, contours, -1, Scalar(0), 2);
+				CvSeq* contour = NULL;
+				contourArea(result, false);
+				sprintf(image_name, "%d contours %s", n, ".jpg");//保存的图片名 
+				imageAddress = path + image_name;
+				imwrite(imageAddress.c_str(), result);   //保存一帧图片
+			    cvNamedWindow("contours",2);
 				imshow("contours", result);
 				waitKey();
 			}
