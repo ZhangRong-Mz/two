@@ -195,27 +195,64 @@ void main()
 				pre = aft.clone();
 				//轮廓提取
 				vector<vector<Point>> contours;
-				Mat matimg;
-				matimg = cvarrToMat(sSrcImage);
-				//find
-				findContours(matimg, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-				CvSeq *first_contour = NULL;
-				CvMemStorage *storage = cvCreateMemStorage(0); //提取轮廓需要的储存容量为默认KB
-				CvSeq * pcontour = 0; //提取轮廓的序列指针
-				cvFindContours(sSrcImage, storage, &first_contour);
-				while (contour = cvFindNextContour(contours))
-				{
+				/*CvContourScanner scanner = NULL;
+				CvMemStorage* storage = cvCreateMemStorage(0);
+				scanner = cvStartFindContours(sSrcImage, storage, sizeof(CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_NONE, cvPoint(0, 0));
+				CvRect rect;
+				CvSeq* contour = NULL;
+				double tmparea = 0.0;
+				double minarea = 1000.0;
+				uchar *pp;
+				IplImage* img_Clone = cvCloneImage(sSrcImage);
+				while (contour = cvFindNextContour(scanner)) {
 					tmparea = fabs(cvContourArea(contour));
-					if (tmparea < minarea)
-					{
-						cvSubstituteContour(scanner, NULL);//删除当前的轮廓  
+					rect = cvBoundingRect(contour, 0);
+
+
+					if (tmparea < minarea) {
+						//当连通区域的中心点为白色时，而且面积较小则用黑色进行填充  
+						pp = (uchar*)(img_Clone->imageData + img_Clone->widthStep*(rect.y + rect.height / 2) + rect.x + rect.width / 2);
+						if (pp[0] == 0) {
+							for (int y = rect.y; y<rect.y + rect.height; y++)
+							{
+								for (int x = rect.x; x<rect.x + rect.width; x++)
+								{
+									pp = (uchar*)(img_Clone->imageData + img_Clone->widthStep*y + x);
+
+
+									if (pp[0] == 0)
+									{
+										pp[0] = 255;
+									}
+								}
+							}
+						}
+
+
 					}
 				}
+				Mat dst_img = cvarrToMat(img_Clone);
+				if (dst_img.channels() == 3)
+					cvtColor(dst_img, dst_img, CV_RGB2GRAY);*/
+			//find
+				Mat middle = cvarrToMat(sSrcImage);
+				Mat resultImage;
+			findContours(middle, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+			vector<vector<Point> >::iterator itc = contours.begin();
+			while (itc != contours.end())
+			{
+				if (itc->size()<500)                       //删除连通域面积小于500的轮廓连通域
+				{
+					itc = contours.erase(itc);
+				}
+				else
+				{
+					++itc;
+				}
+			}
 				//draw
-				Mat result(matimg.size(), CV_8U, Scalar(255));
+				Mat result(middle.size(), CV_8U, Scalar(255));
 				drawContours(result, contours, -1, Scalar(0), 2);
-				CvSeq* contour = NULL;
-				contourArea(result, false);
 				sprintf(image_name, "%d contours %s", n, ".jpg");//保存的图片名 
 				imageAddress = path + image_name;
 				imwrite(imageAddress.c_str(), result);   //保存一帧图片
@@ -224,6 +261,7 @@ void main()
 				waitKey();
 			}
 		}
+
 		for (int i = 1; i <= nn; i++)
 		{
 			Info[i] = i;
