@@ -9,7 +9,7 @@ IplImage * img2 = NULL;
 int su;
 int Record1[999999] = { 0 },Record2[999999] = {0};
 int Info[999999] = {};
-const CvRect rect(200,120, 1700, 910);
+const CvRect rect(230,131, 1565, 852);
 void on_trackbar(int pos, IplImage *g_pGrayImage, IplImage *g_pBinaryImage)
 {
 	// 转为二值图  
@@ -38,7 +38,7 @@ void onTrackerSlid()
 {
 	
 	char image_name[20];
-	std::string path = "C:\\Users\\Mz\\Desktop\\测试\\";
+	std::string path = "C:\\Users\\Mz\\Desktop\\测试2\\";
 	int i, j;
 	CvScalar s0, s1, s2;
 	for (i = 0; i<SrcImage->height; i++)
@@ -115,7 +115,7 @@ void main()
 	int m=0;
 	const char *pstrWindowsSrcTitle = "原图";
 	const char *pstrWindowsToolBarName = "二值图阈值";
-	std::string path = "C:\\Users\\Mz\\Desktop\\测试\\";
+	std::string path = "C:\\Users\\Mz\\Desktop\\测试2\\";
 	VideoCapture cap("C:\\Users\\Mz\\Desktop\\Video\\3.avi");// open the default camera  
 	if (!cap.isOpened()) // check if we succeeded  
 		return;
@@ -147,95 +147,54 @@ void main()
 				cvCvtColor(ssSrcImage, sSrcImage, CV_BGR2GRAY);
 				//cvNamedWindow("灰度图像1", 2);
 				//cvShowImage("灰度图像1", sSrcImage);
+				SrcImage = cvCreateImage(cvSize(rect.width, rect.height), 8, 1);
+				cvSetImageROI(sSrcImage, rect);//选取感兴趣区域
+				cvCopy(sSrcImage, SrcImage);
 				sprintf(image_name, "%d的灰度1%s", n, ".jpg");//保存的图片名 
 				std::string imageAddress = path + image_name;
-				cvSaveImage(imageAddress.c_str(), sSrcImage);   //保存一帧图片
-				on_trackbar(80, sSrcImage, sSrcImage);
+				cvSaveImage(imageAddress.c_str(), SrcImage);   //保存一帧图片
+				on_trackbar(80, SrcImage, SrcImage);
 				//cvNamedWindow("二值化1", 2);
 				//cvShowImage("二值化1", sSrcImage);
 				sprintf(image_name, "%d的二值化1%s", n, ".jpg");//保存的图片名 
 				imageAddress = path + image_name;
-				cvSaveImage(imageAddress.c_str(),sSrcImage);   //保存一帧图片
-				SrcImage = cvCreateImage(cvSize(rect.width, rect.height), 8, 1);
-				cvSetImageROI(sSrcImage, rect);//选取感兴趣区域
-				cvCopy(sSrcImage, SrcImage);
+				cvSaveImage(imageAddress.c_str(),SrcImage);   //保存一帧图片
 				//int thresh = 80;
 				//cvPyrMeanShiftFiltering(pppSrcImage, pppSrcImage, 25, 10, 2);
-				IplImage *ppSrcImage= cvCreateImage(cvGetSize(pppSrcImage), IPL_DEPTH_8U, 1);
+				IplImage *ppSrcImage= cvCreateImage(cvGetSize(pppSrcImage),8, 1);
 				cvCvtColor(pppSrcImage, ppSrcImage, CV_BGR2GRAY);
+				pSrcImage = cvCreateImage(cvSize(rect.width, rect.height), 8, 1);
+				cvSetImageROI(ppSrcImage, rect);//选取感兴趣区域
+				cvCopy(ppSrcImage, pSrcImage);
 				//cvNamedWindow("灰度图像2", 2);
 				//cvShowImage("灰度图像2", ppSrcImage);
 				sprintf(image_name, "%d的灰度2%s", n, ".jpg");//保存的图片名 
 				imageAddress = path + image_name;
-				cvSaveImage(imageAddress.c_str(), ppSrcImage);   //保存一帧图片
-				on_trackbar(80, ppSrcImage, ppSrcImage);
+				cvSaveImage(imageAddress.c_str(), pSrcImage);   //保存一帧图片
+				on_trackbar(80, pSrcImage, pSrcImage);
 				//cvNamedWindow("二值化2", 2);
 				//cvShowImage("二值化2", ppSrcImage);
 				sprintf(image_name, "%d的二值化2%s", n, ".jpg");//保存的图片名 
 				imageAddress = path + image_name;
-				cvSaveImage(imageAddress.c_str(), ppSrcImage);   //保存一帧图片
+				cvSaveImage(imageAddress.c_str(), pSrcImage);   //保存一帧图片
 //结果提取
-				pSrcImage = cvCreateImage(cvSize(rect.width, rect.height), 8, 1);
-				cvSetImageROI(ppSrcImage, rect);//选取感兴趣区域
-				cvCopy(ppSrcImage, pSrcImage);
 				img2 = cvCreateImage(cvGetSize(SrcImage), 8, 1);
 				// int channel = img->nChannels;  
 				// printf("the image is %d X %d wiht %d channels",height,width,channel);  
 				//cvNamedWindow("SrcImage", 2);//创建窗口  
 				//cvNamedWindow("pSrcImage", 2);
-				cvNamedWindow("result", 2);
 				//cvShowImage("SrcImage", SrcImage);//显示图像  
 				//cvShowImage("pSrcImage", pSrcImage);
 				//cvCreateTrackbar("threshold", "result", &thresh, 255, onTrackerSlid);
 				onTrackerSlid();
 				cvWaitKey(0); //等待按键  
-    		    //cvDestroyWindow("SrcImage");//销毁窗口  
-                //cvDestroyWindow("pSrcImage");
+    		    //cvDestroyWindow("result");//销毁窗口  
 				//重新赋值
 				pre = aft.clone();
 				//轮廓提取
 				vector<vector<Point>> contours;
-				/*CvContourScanner scanner = NULL;
-				CvMemStorage* storage = cvCreateMemStorage(0);
-				scanner = cvStartFindContours(sSrcImage, storage, sizeof(CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_NONE, cvPoint(0, 0));
-				CvRect rect;
-				CvSeq* contour = NULL;
-				double tmparea = 0.0;
-				double minarea = 1000.0;
-				uchar *pp;
-				IplImage* img_Clone = cvCloneImage(sSrcImage);
-				while (contour = cvFindNextContour(scanner)) {
-					tmparea = fabs(cvContourArea(contour));
-					rect = cvBoundingRect(contour, 0);
-
-
-					if (tmparea < minarea) {
-						//当连通区域的中心点为白色时，而且面积较小则用黑色进行填充  
-						pp = (uchar*)(img_Clone->imageData + img_Clone->widthStep*(rect.y + rect.height / 2) + rect.x + rect.width / 2);
-						if (pp[0] == 0) {
-							for (int y = rect.y; y<rect.y + rect.height; y++)
-							{
-								for (int x = rect.x; x<rect.x + rect.width; x++)
-								{
-									pp = (uchar*)(img_Clone->imageData + img_Clone->widthStep*y + x);
-
-
-									if (pp[0] == 0)
-									{
-										pp[0] = 255;
-									}
-								}
-							}
-						}
-
-
-					}
-				}
-				Mat dst_img = cvarrToMat(img_Clone);
-				if (dst_img.channels() == 3)
-					cvtColor(dst_img, dst_img, CV_RGB2GRAY);*/
 			//find
-				Mat middle = cvarrToMat(sSrcImage);
+				Mat middle = cvarrToMat(SrcImage);
 				Mat resultImage;
 			findContours(middle, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 			vector<vector<Point> >::iterator itc = contours.begin();
