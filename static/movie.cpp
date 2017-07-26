@@ -6,10 +6,11 @@ using namespace std;
 IplImage * SrcImage = NULL;
 IplImage * pSrcImage = NULL;
 IplImage * img2 = NULL;
+IplImage * img = NULL;
 int su;
 int Record1[999999] = { 0 },Record2[999999] = {0};
 int Info[999999] = {};
-const CvRect rect(230,131, 1565, 852);
+const CvRect rect(240,131, 1555, 852);
 void on_trackbar(int pos, IplImage *g_pGrayImage, IplImage *g_pBinaryImage)
 {
 	// 转为二值图  
@@ -108,15 +109,28 @@ void quick_sort(int l, int r)
 	}
 }
 
+void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar & color)
+{
+	// 将检测到的直线在图上画出来 
+	vector<Vec4i>::const_iterator it = lines.begin();
+	while (it != lines.end())
+	{
+		Point pt1((*it)[0], (*it)[1]);
+		Point pt2((*it)[2], (*it)[3]);
+		line(image, pt1, pt2, color, 1); //  线条宽度设置
+		++it;
+	}
+}
 void main()
 {
+	Mat DstImg;
 	char image_name[20];
 	int n=0;
 	int m=0;
 	const char *pstrWindowsSrcTitle = "原图";
 	const char *pstrWindowsToolBarName = "二值图阈值";
 	std::string path = "C:\\Users\\Mz\\Desktop\\测试2\\";
-	VideoCapture cap("C:\\Users\\Mz\\Desktop\\Video\\3.avi");// open the default camera  
+	VideoCapture cap("C:\\Users\\Mz\\Desktop\\Video\\5.avi");// open the default camera  
 	if (!cap.isOpened()) // check if we succeeded  
 		return;
 	Mat pre;
@@ -150,10 +164,13 @@ void main()
 				SrcImage = cvCreateImage(cvSize(rect.width, rect.height), 8, 1);
 				cvSetImageROI(sSrcImage, rect);//选取感兴趣区域
 				cvCopy(sSrcImage, SrcImage);
+
 				sprintf(image_name, "%d的灰度1%s", n, ".jpg");//保存的图片名 
 				std::string imageAddress = path + image_name;
 				cvSaveImage(imageAddress.c_str(), SrcImage);   //保存一帧图片
 				on_trackbar(80, SrcImage, SrcImage);
+				Mat miSrcImage = cvarrToMat(SrcImage);
+				DstImg = miSrcImage.clone();
 				//cvNamedWindow("二值化1", 2);
 				//cvShowImage("二值化1", sSrcImage);
 				sprintf(image_name, "%d的二值化1%s", n, ".jpg");//保存的图片名 
@@ -196,7 +213,9 @@ void main()
 			//find
 				Mat middle = cvarrToMat(SrcImage);
 				Mat resultImage;
-			findContours(middle, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+				Mat CannyImg;
+				Canny(DstImg, CannyImg, 50, 200, 3);
+			findContours(DstImg, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 			vector<vector<Point> >::iterator itc = contours.begin();
 			while (itc != contours.end())
 			{
@@ -209,15 +228,59 @@ void main()
 					++itc;
 				}
 			}
+
 				//draw
-				Mat result(middle.size(), CV_8U, Scalar(255));
-				drawContours(result, contours, -1, Scalar(0), 2);
+				Mat result(middle.size(), CV_8U, Scalar(255,255,255));
+				drawContours(result, contours, -1, Scalar(0,0,0), 2);
+				//cv::line(result, cv::Point(240,800), cv::Point(1795,800),Scalar(0));
 				sprintf(image_name, "%d contours %s", n, ".jpg");//保存的图片名 
 				imageAddress = path + image_name;
 				imwrite(imageAddress.c_str(), result);   //保存一帧图片
+
+				Mat image;
+				cvtColor(result,image, CV_GRAY2BGR);
+				Mat I;
+				cvtColor(image,I, CV_BGR2GRAY);
+				Mat contours1;
+				Canny(I, contours1, 125, 350);
+				threshold(contours1, contours1, 128, 255, THRESH_BINARY);
+				vector<Vec4i> lines;
+				// 检测直线
+				HoughLinesP(contours1, lines, 1, CV_PI / 180, 145, 300, 2000);
+				printf("%d\n", lines.size());
+				drawDetectLines(image,lines, Scalar(0, 255, 0));
+				namedWindow("result", 2);
+				imshow("result", image);
+				sprintf(image_name, "%d HoughLinesP %s", n, ".jpg");//保存的图片名 
+				imageAddress = path + image_name;
+				imwrite(imageAddress.c_str(),image);   //保存一帧图片
+
+
+				/*
+				vector<Vec4i> lines;
+				HoughLinesP(result, lines, 1,CV_PI/360, 180, 30, 15);
+				printf("%d", lines.size());
+				Mat finalResult;
+				cvtColor(result,finalResult, CV_GRAY2BGR);
+				drawDetectLines(finalResult, lines, Scalar(0, 0,255));
+				
+				vector<Vec4i> Lines;
+				HoughLinesP(CannyImg, Lines, 1, CV_PI / 360, 170, 30, 15);
+				for (size_t i = 0; i < Lines.size(); i++)
+				{
+					Vec4i l = Lines[i];
+					line(DstImg, Point(l[0], l[1]), Point(l[2],l[3]), Scalar(23,180,55), 1, LINE_AA);
+				}
+				
 			    cvNamedWindow("contours",2);
-				imshow("contours", result);
+				imshow("contours", finalResult);
+				sprintf(image_name, "finalResult.jpg");//保存的图片名 
+				imageAddress = path + image_name;
+				IplImage *res = &IplImage(finalResult);
+				cvSaveImage(imageAddress.c_str(), res);   //保存一帧图片
+				*/
 				waitKey();
+				
 			}
 		}
 
