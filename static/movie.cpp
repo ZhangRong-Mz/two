@@ -118,6 +118,7 @@ void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar & color)
 		Point pt1((*it)[0], (*it)[1]);
 		Point pt2((*it)[2], (*it)[3]);
 		line(image, pt1, pt2, color, 1); //  线条宽度设置
+		printf("%d %d %d %d\n", pt1.x, pt1.y, pt2.x, pt2.y);
 		++it;
 	}
 }
