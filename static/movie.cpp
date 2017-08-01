@@ -7,6 +7,8 @@ IplImage * SrcImage = NULL;
 IplImage * pSrcImage = NULL;
 IplImage * img2 = NULL;
 IplImage * img = NULL;
+int lineNum;
+int Line[100][4];
 int su;
 int Record1[999999] = { 0 },Record2[999999] = {0};
 int Info[999999] = {};
@@ -113,13 +115,28 @@ void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar & color)
 {
 	// 将检测到的直线在图上画出来 
 	vector<Vec4i>::const_iterator it = lines.begin();
+	int i = 0;
 	while (it != lines.end())
 	{
 		Point pt1((*it)[0], (*it)[1]);
 		Point pt2((*it)[2], (*it)[3]);
 		line(image, pt1, pt2, color, 1); //  线条宽度设置
+		//端点记录
+		Line[i][0] = pt1.x;
+		Line[i][1] = pt1.y;
+		Line[i][2] = pt2.x;
+		Line[i][3] = pt2.y;
 		printf("%d %d %d %d\n", pt1.x, pt1.y, pt2.x, pt2.y);
 		++it;
+	}
+}
+
+//直线重合处理
+void FourLines()
+{
+	while (lineNum > 4)
+	{
+
 	}
 }
 void main()
@@ -248,7 +265,14 @@ void main()
 				vector<Vec4i> lines;
 				// 检测直线
 				HoughLinesP(contours1, lines, 1, CV_PI / 180, 145, 300, 2000);
+				//直线的数量
 				printf("%d\n", lines.size());
+				lineNum = lines.size();
+				if (lines.size() > 99)
+				{
+					printf("检测错误!!!");
+					return;
+				}
 				drawDetectLines(image,lines, Scalar(0, 255, 0));
 				namedWindow("result", 2);
 				imshow("result", image);
